@@ -34,7 +34,11 @@ class NetworkModule:
         result = b''
         num_received = 0
         while num_received < num_bytes:
-            chunk = self.socket.recv(min(num_bytes - num_received, self.PACKET_SIZE))
+            try:
+                chunk = self.socket.recv(min(num_bytes - num_received, self.PACKET_SIZE))
+            except OSError as e:
+                return None  # client disconnected
+
             if not chunk:
                 return None
 
@@ -69,6 +73,9 @@ class NetworkModule:
 
         self.socket.close()
         self.__init__()
+
+    def __str__(self):
+        return str(self.__class__)[8:-2]
 
 
 class BaseConnection(NetworkModule):
@@ -108,19 +115,13 @@ class BaseServer(NetworkModule):
 
         self.socket.bind((self.HOSTNAME, self.PORT))
         self.socket.listen(self.BACKLOG)
-        print(f'{self}: Listening on port {self.PORT}...')
+        print(f'{self}: Listening on {self.HOSTNAME}:{self.PORT}...')
 
         while True:
             try:
                 conn, addr = self.socket.accept()
-                print(f'{self}: {conn} from {addr} connection accepted.')
+                print(f'{self}: Connection from {addr[0]} accepted on port {addr[1]}.')
                 threading.Thread(target=self.CONNECTION_KLASS().handle_connection, args=(conn, addr)).start()
 
             except Exception as e:
                 print(e)
-
-
-
-
-
-

@@ -30,6 +30,7 @@ class Lab3Client(BaseClient):
     def bye(self):
         """Closes the connection."""
 
+        self.push('BYE')
         self.close()
 
 

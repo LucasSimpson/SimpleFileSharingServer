@@ -67,7 +67,7 @@ class Client:
         try:
             self.connection.connect((addr, int(port)))
             self.connected_to = f'{addr}:{port}'
-            print('Successfully connected to {self.connected}')
+            print(f'Successfully connected to {self.connected_to}')
         except Exception as e:
             print(f'Error connecting: {e}')
 

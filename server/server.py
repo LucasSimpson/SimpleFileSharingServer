@@ -15,7 +15,8 @@ class Lab3ServerConnectionHandler(BaseConnection):
         self.commands = {
             r'^LIST$': self.list,
             r'^GET-(?P<filename>.+)$': self.get,
-            r'^PUT-(?P<filename>[^\s]+)\n(?P<contents>(.|\n)*)$': self.put
+            r'^PUT-(?P<filename>[^\s]+)\n(?P<contents>(.|\n)*)$': self.put,
+            r'^BYE$': self.bye
         }
 
     def handle_connection(self, conn, addr, *args, **kwargs):
@@ -47,7 +48,7 @@ class Lab3ServerConnectionHandler(BaseConnection):
                     break
 
             # get response to send back from method, and send it back
-            response = ''
+            response = None
             try:
                 response = handler(**match.groupdict())
 
@@ -56,7 +57,8 @@ class Lab3ServerConnectionHandler(BaseConnection):
                 response = str(e)
 
             finally:
-                self.push(response)
+                if response:
+                    self.push(response)
 
         print(f'{self}: Client disconnected.')
 
@@ -82,6 +84,11 @@ class Lab3ServerConnectionHandler(BaseConnection):
             file.write(contents)
 
         return 'ACK'
+
+    def bye(self):
+        """Closes the connection."""
+
+        self.close()
 
 
 class Lab3Server(BaseServer):
