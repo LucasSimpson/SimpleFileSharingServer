@@ -2,6 +2,10 @@ from base import BaseClient
 
 
 class Lab3Client(BaseClient):
+    """Client for connecting to the file sharing server."""
+
+    PORT = 30001
+    TIMEOUT = 5
 
     def list(self):
         """Returns a list of all files on the remote server."""
@@ -34,8 +38,6 @@ class Lab3Client(BaseClient):
         self.close()
 
 
-
 if __name__ == '__main__':
     c = Lab3Client()
     c.connect()
-

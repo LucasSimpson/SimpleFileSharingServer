@@ -1,7 +1,9 @@
 import os
 import re
+import threading
 
 from base import BaseConnection, BaseServer
+from server.service_discovery import Lab3DiscoveryServer
 
 
 class Lab3ServerConnectionHandler(BaseConnection):
@@ -94,17 +96,32 @@ class Lab3ServerConnectionHandler(BaseConnection):
 class Lab3Server(BaseServer):
     """Server class for coe4DN4 lab 3."""
 
-    CONNECTION_KLASS = Lab3ServerConnectionHandler
+    CONNECTION_CLASS = Lab3ServerConnectionHandler
+    PORT = 30001
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         print('Current files on servers shared directory:')
-        for filename in os.listdir(self.CONNECTION_KLASS.SHARED_FOLDER):
+        for filename in os.listdir(self.CONNECTION_CLASS.SHARED_FOLDER):
             print(f'\t{filename}')
 
 
+class SDThread(threading.Thread):
+    """Thread wrapper around service discovery server."""
+
+    def __init__(self):
+        super().__init__()
+        self.server = Lab3DiscoveryServer()
+
+    def run(self):
+        self.server.listen()
+
+
 def run_server():
+    sdt = SDThread()
+    sdt.start()
+
     s = Lab3Server()
     s.listen()
 

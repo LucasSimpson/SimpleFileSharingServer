@@ -1,15 +1,16 @@
 import os
-
-from .client_connection import Lab3Client
 import re
+
+from client.sd_client_connection import Lab3ServiceDiscoveryClient
+from .client_connection import Lab3Client
 
 
 class Client:
-
     SHARED_FOLDER = './client/shared_folder/'
 
     def __init__(self):
         self.connection = Lab3Client()
+        self.sd_connection = Lab3ServiceDiscoveryClient()
         self.connected_to = None
 
         self.commands = {
@@ -52,9 +53,15 @@ class Client:
     def scan(self):
         """Scans network and prints out valid connections."""
 
-        # TODO implement
-        print('in scan')
-        pass
+        services = self.sd_connection.find_all_services()
+
+        if not services:
+            print('No services found :(')
+            return
+
+        print('Services found:')
+        for service in services:
+            print(f'\t{service[1][0]}: {service[0]}')
 
     def connect(self, addr, port):
         """Connect to remote server on addr:port."""
@@ -156,5 +163,3 @@ class Client:
 def run_client():
     c = Client()
     c.start()
-
-

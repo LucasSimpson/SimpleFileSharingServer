@@ -1,18 +1,41 @@
 import socket
 import threading
 
+from base.mixins import UDPMixin
+
+
+def get_host_name():
+    """This is a hack to get public IP address."""
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("gmail.com", 80))
+    hostname = s.getsockname()[0]
+    s.close()
+
+    return hostname
+
 
 class NetworkModule:
     """Basic network module. Defines constants and baseline TCP-oriented methods."""
 
-    HOSTNAME = socket.gethostname()
+    HOSTNAME = get_host_name()
     PORT = 30001
 
     ENCODING = 'utf-8'
     PACKET_SIZE = 1024
 
+    TIMEOUT = None
+
     def __init__(self, socket_=None):
-        self.socket = socket_ if socket_ else socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket = socket_ if socket_ else self.build_socket()
+
+    def build_socket(self):
+        """Build the socket. Can be overriden to use different types."""
+
+        socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_.settimeout(self.TIMEOUT)
+
+        return socket_
 
     def push(self, message):
         """Send message through the connection."""
@@ -105,23 +128,51 @@ class BaseServer(NetworkModule):
     """Defines a Server socket. Listens for connections, creates server-client instances, and repeats."""
 
     BACKLOG = 5
-    CONNECTION_KLASS = BaseConnection
+    CONNECTION_CLASS = BaseConnection
 
-    def __init__(self, socket_=None):
-        super().__init__(socket_)
+    def prepare_socket(self):
+        """Prepare socket for listening."""
+
+        self.socket.bind((self.HOSTNAME, self.PORT))
+        self.socket.listen(self.BACKLOG)
 
     def listen(self):
         """Start listening for, and process, connections on HOSTNAME:PORT"""
 
-        self.socket.bind((self.HOSTNAME, self.PORT))
-        self.socket.listen(self.BACKLOG)
+        self.prepare_socket()
         print(f'{self}: Listening on {self.HOSTNAME}:{self.PORT}...')
 
         while True:
             try:
                 conn, addr = self.socket.accept()
                 print(f'{self}: Connection from {addr[0]} accepted on port {addr[1]}.')
-                threading.Thread(target=self.CONNECTION_KLASS().handle_connection, args=(conn, addr)).start()
+                threading.Thread(target=self.CONNECTION_CLASS().handle_connection, args=(conn, addr)).start()
 
             except Exception as e:
                 print(e)
+
+
+class BaseUDPServer(UDPMixin, NetworkModule):
+    """Defines a base server that handles UDP packets."""
+
+    def listen(self):
+        """Start listening and processing UDP packets."""
+
+        self.prepare_socket()
+        print(f'{self}: Listening on {self.HOSTNAME}:{self.PORT}')
+
+        while True:
+            try:
+                msg, addr_port = self.pull()
+                response = self.handle_packet(msg, addr_port)
+
+                if response:
+                    self.push(response, addr_port)
+
+            except Exception as e:
+                print(e)
+
+    def handle_packet(self, msg, addr_port):
+        """Handler method for handling a single UDP packet."""
+
+        raise NotImplemented(f'{self.__class__} has to implement handle_packet(msg)')

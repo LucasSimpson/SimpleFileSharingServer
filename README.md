@@ -5,7 +5,9 @@
 Compatible with python 3.6
 
 start server:
-    python run.py -r server
+
+`~$ python run.py -r server`
 
 start client:
-    python run.py -r client
+
+`~$ python run.py -r client`
