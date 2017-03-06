@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 from client.sd_client_connection import Lab3ServiceDiscoveryClient
 from .client_connection import Lab3Client
@@ -22,7 +23,8 @@ class Client:
             r'get (?P<filename>[^\s]+)': self.get,
             r'bye': self.bye,
 
-            r'help': self.help
+            r'help': self.help,
+            r'exit': self.exit,
         }
 
     def get_command_match(self, text):
@@ -158,6 +160,9 @@ class Client:
         print(f'Valid commands are:')
         for key in self.commands.keys():
             print(f'\t{key}')
+
+    def exit(self):
+        sys.exit(0)
 
 
 def run_client():
