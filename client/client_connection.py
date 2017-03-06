@@ -19,16 +19,18 @@ class Lab3Client(BaseClient):
         """Gets file contents with name filename from the remote server."""
 
         self.push(f'GET-{filename}')
-        file_contents = self.pull()
+        file_contents = self.pull(decode=False)
         return file_contents
 
     def put(self, filename, file_contents):
         """Uploads file with name filename to the remote server."""
 
-        self.push(f'PUT-{filename}\n{file_contents}')
+        self.push(f'PUT-{filename}')
 
         response = self.pull()
-        if response != 'ACK':
+        if response == 'OK':
+            self.push(file_contents, encode=False)
+        else:
             raise Exception(response)
 
     def bye(self):

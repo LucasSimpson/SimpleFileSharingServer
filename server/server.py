@@ -17,7 +17,7 @@ class Lab3ServerConnectionHandler(BaseConnection):
         self.commands = {
             r'^LIST$': self.list,
             r'^GET-(?P<filename>.+)$': self.get,
-            r'^PUT-(?P<filename>[^\s]+)\n(?P<contents>(.|\n)*)$': self.put,
+            r'^PUT-(?P<filename>[^\s]+)$': self.put,
             r'^BYE$': self.bye
         }
 
@@ -60,7 +60,7 @@ class Lab3ServerConnectionHandler(BaseConnection):
 
             finally:
                 if response:
-                    self.push(response)
+                    self.push(response, encode=type(response) is str)
 
         print(f'{self}: Client disconnected.')
 
@@ -71,21 +71,22 @@ class Lab3ServerConnectionHandler(BaseConnection):
         for filename in os.listdir(self.SHARED_FOLDER):
             result += f'{filename}\n'
 
-        return result [:-1]  # drop last \n
+        return result[:-1]  # drop last \n
 
     def get(self, filename):
         """Returns contents of file with name filename"""
 
-        with open(f'{self.SHARED_FOLDER}{filename}', 'r') as file:
+        with open(f'{self.SHARED_FOLDER}{filename}', 'rb') as file:
             return file.read()
 
-    def put(self, filename, contents):
+    def put(self, filename):
         """Saves file with name filename of contents contents to sharing directory. Returns ACK on success"""
 
-        with open(f'{self.SHARED_FOLDER}{filename}', 'w') as file:
-            file.write(contents)
+        with open(f'{self.SHARED_FOLDER}{filename}', 'wb') as file:
+            self.push('OK')
 
-        return 'ACK'
+            file_contents = self.pull(decode=False)
+            file.write(file_contents)
 
     def bye(self):
         """Closes the connection."""
@@ -119,9 +120,9 @@ class SDThread(threading.Thread):
 
 
 def run_server():
+    s = Lab3Server()  # instatiate first solely so that the output of the shared directory is not weaved across threads
+
     sdt = SDThread()
     sdt.start()
 
-    s = Lab3Server()
     s.listen()
-

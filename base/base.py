@@ -37,17 +37,20 @@ class NetworkModule:
 
         return socket_
 
-    def push(self, message):
+    def push(self, message, encode=True):
         """Send message through the connection."""
 
+        assert (type(message) is str if encode else type(message) is bytes)
+
+        msg_b = message.encode(self.ENCODING) if encode else message
+
         size = socket.htonl(len(message))
-        mesg_b = message.encode(self.ENCODING)
         final_msg = bytes([
             size >> 24 & 0xFF,
             size >> 16 & 0xFF,
             size >> 8 & 0xFF,
             size & 0xFF,
-        ]) + mesg_b
+        ]) + msg_b
 
         self.socket.sendall(final_msg)
 
@@ -70,7 +73,7 @@ class NetworkModule:
 
         return result
 
-    def pull(self):
+    def pull(self, decode=True):
         """Receive a message from the connection."""
 
         size_b = self._recv(4)
@@ -89,7 +92,7 @@ class NetworkModule:
         if not enc_msg:
             return None
 
-        return enc_msg.decode(self.ENCODING)
+        return enc_msg.decode(self.ENCODING) if decode else enc_msg
 
     def close(self):
         """Closes a connection."""

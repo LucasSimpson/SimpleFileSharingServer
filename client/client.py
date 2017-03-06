@@ -114,7 +114,7 @@ class Client:
         try:
             file_contents = self.connection.get(filename)
 
-            with open(f'{self.SHARED_FOLDER}{filename}', 'w') as file:
+            with open(f'{self.SHARED_FOLDER}{filename}', 'wb') as file:
                 file.write(file_contents)
 
             print(f'{filename} successfully downloaded')
@@ -132,7 +132,7 @@ class Client:
 
         try:
 
-            with open(f'{self.SHARED_FOLDER}{filename}', 'r') as file:
+            with open(f'{self.SHARED_FOLDER}{filename}', 'rb') as file:
                 file_contents = file.read()
 
             self.connection.put(filename, file_contents)
